@@ -1,0 +1,72 @@
+
+resource "random_integer" "suffix" {
+	min = 10000
+	max = 99999
+}
+
+resource "azurerm_resource_group" "n8n_rg" {
+	name     = "n8n-resource-group"
+	location = "East US"
+	tags = {
+		environment = "demo"
+	}
+}
+
+resource "azurerm_app_service_plan" "n8n_plan" {
+	name                = "n8n-appservice-plan"
+	location            = azurerm_resource_group.n8n_rg.location
+	resource_group_name = azurerm_resource_group.n8n_rg.name
+	kind                = "Linux"	
+	tags = {
+		environment = "demo"
+	}
+
+	sku {
+		tier = "Basic"
+		size = "B1"
+	}
+
+	reserved = true
+}
+
+resource "azurerm_app_service" "n8n_app" {
+	name                = "n8n-appservice"
+	location            = azurerm_resource_group.n8n_rg.location
+	resource_group_name = azurerm_resource_group.n8n_rg.name
+	app_service_plan_id = azurerm_app_service_plan.n8n_plan.id
+	https_only 			= true
+	tags = {
+		environment = "demo"
+	}
+
+	site_config {
+		linux_fx_version = "docker.n8n.io/n8nio/n8n"
+		always_on        = true
+	}
+
+	app_settings = {
+		WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
+		N8N_BASIC_AUTH_ACTIVE = "true"
+		N8N_BASIC_AUTH_USER   = "admin"
+		N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
+		N8N_HOST = "0.0.0.0"
+		N8N_PORT = "5678"
+		N8N_ENCRYPTION_KEY = ""
+		PROTOCOL_N8N = "https"
+		WEBHOOK_URL = ""
+		HOST_N8N = ""
+	}
+
+	logs {
+		application_logs {
+		  file_system_level = "Information"
+		}
+
+		http_logs {
+		  file_system {
+			retention_in_days = 7
+			retention_in_mb = 35
+		  }
+		}
+	}
+}
