@@ -69,14 +69,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: tfplan
+          path: ./terraform/tfplan
 
       - name: Create String Output
         id: tf-plan-string
+        working-directory: ./terraform
         run: |
           TERRAFORM_PLAN=$(terraform show -no-color tfplan)
 
-          elimiter="$(openssl rand -hex 8)"
+          delimiter="$(openssl rand -hex 8)"
           echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
           echo "## Terraform Plan Output" >> $GITHUB_OUTPUT
           echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
