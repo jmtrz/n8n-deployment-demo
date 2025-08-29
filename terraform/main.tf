@@ -12,18 +12,14 @@ resource "azurerm_resource_group" "n8n_rg" {
   }
 }
 
-resource "azurerm_app_service_plan" "n8n_plan" {
+resource "azurerm_service_plan" "n8n_plan" {
   name                = "n8n-appservice-plan"
   location            = azurerm_resource_group.n8n_rg.location
   resource_group_name = azurerm_resource_group.n8n_rg.name
-  kind                = "Linux"
+  os_type             = "Linux"
+  sku_name            = "B1"
   tags = {
     environment = "demo"
-  }
-
-  sku {
-    tier = "Basic"
-    size = "B1"
   }
 
   reserved = true
