@@ -25,7 +25,7 @@ jobs:
       - name: Terraform Init and Terraform plan
         working-directory: ./terraform
         run: | 
-          cd terraform
+          ls
           terraform fmt 
           terraform validate
           terraform init
