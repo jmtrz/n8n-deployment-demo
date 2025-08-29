@@ -1,4 +1,4 @@
-name: '🗒️Terraform Plan'
+name: '🗒️n8n terraform plan/apply'
 
 on:
   workflow_dispatch:
