@@ -35,10 +35,10 @@ resource "azurerm_linux_web_app" "n8n_app" {
 
   site_config {
     application_stack {
-      docker_image = "docker.n8n.io/n8nio/n8n"
+      docker_image     = "docker.n8n.io/n8nio/n8n"
       docker_image_tag = "latest"
     }
-    always_on        = true
+    always_on           = true
     minimum_tls_version = "1.2"
   }
 
