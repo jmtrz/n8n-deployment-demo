@@ -111,14 +111,16 @@ jobs:
         terraform_wrapper: false
 
     - name: Terraform Init
+      working-directory: ./terraform
       run: terraform init
 
     - name: Download Terraform Plan
       uses: actions/download-artifact@v4
       with:
         name: tfplan
-        path: ./terraform/tfplan
+        path: ./terraform
     
     # Terraform Apply
     - name: Terraform Apply
+      working-directory: ./terraform
       run: terraform apply -auto-approve tfplan
