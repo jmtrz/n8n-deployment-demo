@@ -55,10 +55,13 @@ jobs:
           echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
 
           if [ $exitcode -eq 0 ]; then
-            echo "Terraform plan succeeded"
+            echo "Terraform plan succeeded - no changes needed"
+            exit 0
+          elif [ $exitcode -eq 2 ]; then
+            echo "Terraform plan succeeded - changes detected"
             exit 0
           else
-            echo "Terraform plan failed"
+            echo "Terraform plan failed with exit code $exitcode"
             exit 1
           fi
 
@@ -67,3 +70,19 @@ jobs:
         with:
           name: tfplan
           path: ./terraform/tfplan
+
+      - name: Create String Output
+        id: tf-plan-string
+        run: |
+          TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+
+          elimiter="$(openssl rand -hex 8)"
+          echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
+          echo "## Terraform Plan Output" >> $GITHUB_OUTPUT
+          echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo '```terraform' >> $GITHUB_OUTPUT
+          echo "$TERRAFORM_PLAN" >> $GITHUB_OUTPUT
+          echo '```' >> $GITHUB_OUTPUT
+          echo "</details>" >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
