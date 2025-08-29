@@ -5,10 +5,10 @@ on:
 
 env:
   TERRAFORM_VERSION: '1.5.0'
-  ARM_CLIENT_ID: ${{ secrets.CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.TENANT_ID }}
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
   TF_VAR_n8n_admin_password: ${{ secrets.TF_VAR_n8n_admin_password }}
 
 jobs:
