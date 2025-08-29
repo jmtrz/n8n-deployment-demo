@@ -6,14 +6,12 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.0.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
   }
 
-  backend "azurerm" {
-    # Configure via environment variables or command line
-    # storage_account_name = "your-storage-account"
-    # container_name       = "tfstate"
-    # key                  = "n8n/terraform.tfstate"
-  }
 }
 
 provider "azurerm" {
