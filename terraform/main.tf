@@ -6,7 +6,7 @@ resource "random_integer" "suffix" {
 
 resource "azurerm_resource_group" "n8n_rg" {
   name     = "n8n-resource-group"
-  location = "East US"
+  location = "West US 2"
   tags = {
     environment = "demo"
   }
@@ -17,7 +17,7 @@ resource "azurerm_service_plan" "n8n_plan" {
   location            = azurerm_resource_group.n8n_rg.location
   resource_group_name = azurerm_resource_group.n8n_rg.name
   os_type             = "Linux"
-  sku_name            = "B1"
+  sku_name            = "F1"
   tags = {
     environment = "demo"
   }
