@@ -25,10 +25,17 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
+      - name: Debug Environment Variables
+        run: |
+          echo "ARM_CLIENT_ID is set: $([[ -n "$ARM_CLIENT_ID" ]] && echo "✓" || echo "✗")"
+          echo "ARM_CLIENT_SECRET is set: $([[ -n "$ARM_CLIENT_SECRET" ]] && echo "✓" || echo "✗")" 
+          echo "ARM_SUBSCRIPTION_ID is set: $([[ -n "$ARM_SUBSCRIPTION_ID" ]] && echo "✓" || echo "✗")"
+          echo "ARM_TENANT_ID is set: $([[ -n "$ARM_TENANT_ID" ]] && echo "✓" || echo "✗")"
+          echo "TF_VAR_n8n_admin_password is set: $([[ -n "$TF_VAR_n8n_admin_password" ]] && echo "✓" || echo "✗")"
+
       - name: Terraform Init
         working-directory: ./terraform
-        run: | 
-          terraform init
+        run: terraform init
       
       - name: Terraform Format
         working-directory: ./terraform
