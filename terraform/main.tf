@@ -21,23 +21,25 @@ resource "azurerm_service_plan" "n8n_plan" {
   tags = {
     environment = "demo"
   }
-
-  reserved = true
 }
 
-resource "azurerm_app_service" "n8n_app" {
+resource "azurerm_linux_web_app" "n8n_app" {
   name                = "n8n-appservice"
   location            = azurerm_resource_group.n8n_rg.location
   resource_group_name = azurerm_resource_group.n8n_rg.name
-  app_service_plan_id = azurerm_app_service_plan.n8n_plan.id
+  service_plan_id     = azurerm_service_plan.n8n_plan.id
   https_only          = true
   tags = {
     environment = "demo"
   }
 
   site_config {
-    linux_fx_version = "docker.n8n.io/n8nio/n8n"
+    application_stack {
+      docker_image = "docker.n8n.io/n8nio/n8n"
+      docker_image_tag = "latest"
+    }
     always_on        = true
+    minimum_tls_version = "1.2"
   }
 
   app_settings = {
