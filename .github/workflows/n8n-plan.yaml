@@ -11,22 +11,20 @@ env:
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
 jobs:
-  terraform:
+  terraform-plan:
+    name: 'Terraform Plan'
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
 
-      - name: Terraform Init and Terraform plan
+      - name: Terraform Init
         working-directory: ./terraform
         run: | 
-          ls
-          terraform fmt 
-          terraform validate
           terraform init
-          terraform plan
