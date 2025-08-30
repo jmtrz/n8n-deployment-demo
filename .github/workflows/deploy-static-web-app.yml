@@ -82,8 +82,14 @@ jobs:
       id: terraform-output
       working-directory: ${{ env.TERRAFORM_PATH }}
       run: |
+        echo "=== Terraform Outputs Debug ==="
+        terraform output
+        echo "================================"
+        
         echo "static_web_app_name=$(terraform output -raw static_web_app_name)" >> $GITHUB_OUTPUT
         echo "deployment_token=$(terraform output -raw deployment_token)" >> $GITHUB_OUTPUT
+        
+        echo "Outputs written to GITHUB_OUTPUT"
 
   build-and-deploy:
     needs: terraform-plan-and-apply
@@ -121,6 +127,11 @@ jobs:
         ls -la dist/
         ls -la dist/n8n-deployment-monitoring/ || echo "dist/n8n-deployment-monitoring not found"
         
+    - name: Debug deployment token
+      run: |
+        echo "Terraform deployment token available: ${{ needs.terraform-plan-and-apply.outputs.deployment-token != '' }}"
+        echo "Fallback secret available: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != '' }}"
+        
     - name: Deploy to Azure Static Web Apps
       uses: Azure/static-web-apps-deploy@v1
       with:
@@ -131,6 +142,7 @@ jobs:
         api_location: ''
         output_location: ''
         skip_app_build: true
+        skip_deploy_on_missing_secrets: true
 
   close-pull-request:
     if: github.event.action == 'closed'
