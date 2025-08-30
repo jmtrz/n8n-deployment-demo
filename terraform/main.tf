@@ -13,7 +13,7 @@ resource "azurerm_resource_group" "n8n_rg" {
 }
 
 resource "azurerm_service_plan" "n8n_plan" {
-  name                = "n8n-appservice-plan"
+  name                = "n8n-appservice-plan-${random_integer.suffix.result}"
   location            = azurerm_resource_group.n8n_rg.location
   resource_group_name = azurerm_resource_group.n8n_rg.name
   os_type             = "Linux"
@@ -24,7 +24,7 @@ resource "azurerm_service_plan" "n8n_plan" {
 }
 
 resource "azurerm_linux_web_app" "n8n_app" {
-  name                = "n8n-appservice"
+  name                = "n8n-appservice-${random_integer.suffix.result}"
   location            = azurerm_resource_group.n8n_rg.location
   resource_group_name = azurerm_resource_group.n8n_rg.name
   service_plan_id     = azurerm_service_plan.n8n_plan.id
