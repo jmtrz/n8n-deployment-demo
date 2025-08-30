@@ -40,6 +40,7 @@ resource "azurerm_linux_web_app" "n8n_app" {
     }
     always_on           = true
     minimum_tls_version = "1.2"
+    use_32_bit_worker   = true # When using a F1 tier app service plan. Free or Shared tiers do not have a 64 bit option.
   }
 
   app_settings = {
