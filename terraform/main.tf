@@ -54,7 +54,7 @@ resource "azurerm_linux_web_app" "n8n_app" {
     N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
 
     # n8n network configuration (standard variable names)
-    N8N_HOST     = "0.0.0.0"
+    N8N_HOST     = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
     N8N_PORT     = "5678"
     N8N_PROTOCOL = "https"
 
