@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  githubToken: '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',
+  githubToken: '', // Empty since repo is public - no token needed
   defaultRepositories: [
     {
       owner: 'jmtrz',

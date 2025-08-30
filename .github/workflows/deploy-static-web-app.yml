@@ -70,7 +70,7 @@ jobs:
 
     - name: Terraform Plan
       working-directory: ${{ env.TERRAFORM_PATH }}
-      run: terraform plan -var="environment=prod" -var="location=East US" -out=tfplan
+      run: terraform plan -var="environment=demo" -out=tfplan
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -164,4 +164,4 @@ jobs:
 
     - name: Terraform Destroy
       working-directory: ${{ env.TERRAFORM_PATH }}
-      run: terraform destroy -auto-approve -var="environment=dev" -var="location=East US"
+      run: terraform destroy -auto-approve -var="environment=demo"
