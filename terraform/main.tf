@@ -57,10 +57,10 @@ resource "azurerm_linux_web_app" "n8n_app" {
 
     # n8n security and URLs
     # N8N_ENCRYPTION_KEY = ""
-    WEBHOOK_URL = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
-    HOST_N8N    = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
-    PORT_N8N    = "5678"
-    PROTOCOL_N8N = "https"
+    WEBHOOK_URL                         = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    HOST_N8N                            = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    PORT_N8N                            = "5678"
+    PROTOCOL_N8N                        = "https"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
 
     # Additional n8n configuration
