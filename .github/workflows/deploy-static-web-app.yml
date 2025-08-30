@@ -79,12 +79,12 @@ jobs:
       run: terraform plan -var="environment=demo" -out=tfplan
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       working-directory: ${{ env.TERRAFORM_PATH }}
       run: terraform apply -auto-approve tfplan
 
     - name: Get Terraform Outputs
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       id: terraform-output
       working-directory: ${{ env.TERRAFORM_PATH }}
       run: |
