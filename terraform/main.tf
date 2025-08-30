@@ -17,7 +17,7 @@ resource "azurerm_service_plan" "n8n_plan" {
   location            = azurerm_resource_group.n8n_rg.location
   resource_group_name = azurerm_resource_group.n8n_rg.name
   os_type             = "Linux"
-  sku_name            = "F1"
+  sku_name            = "B1"
   tags = {
     environment = "demo"
   }
@@ -40,7 +40,7 @@ resource "azurerm_linux_web_app" "n8n_app" {
     }
     always_on           = true
     minimum_tls_version = "1.2"
-    use_32_bit_worker   = true # When using a F1 tier app service plan. Free or Shared tiers do not have a 64 bit option.
+    # use_32_bit_worker   = true # When using a F1 tier app service plan. Free or Shared tiers do not have a 64 bit option.
   }
 
   app_settings = {
