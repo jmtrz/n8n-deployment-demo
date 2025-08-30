@@ -59,8 +59,8 @@ resource "azurerm_linux_web_app" "n8n_app" {
     # N8N_PROTOCOL      = "https"
     # N8N_SECURE_COOKIE = "true"
 
-    HOST_N8N = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
-    PORT_N8N = "5678"
+    HOST_N8N     = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    PORT_N8N     = "5678"
     PROTOCOL_N8N = "https"
 
     # n8n URLs
