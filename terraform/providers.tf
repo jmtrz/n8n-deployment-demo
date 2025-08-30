@@ -12,6 +12,13 @@ terraform {
     }
   }
 
+  backend "azurerm" {
+    # Configuration will be provided via environment variables or init command
+    # resource_group_name  = var.backend_resource_group_name
+    # storage_account_name = var.backend_storage_account_name
+    # container_name       = var.backend_container_name
+    # key                  = "n8n/terraform.tfstate"
+  }
 }
 
 provider "azurerm" {
