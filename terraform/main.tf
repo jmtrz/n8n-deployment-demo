@@ -45,9 +45,6 @@ resource "azurerm_linux_web_app" "n8n_app" {
   }
 
   app_settings = {
-    # App Service specific
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
-
     # n8n authentication
     # N8N_BASIC_AUTH_ACTIVE   = "true"
     # N8N_BASIC_AUTH_USER     = "admin"
@@ -59,12 +56,11 @@ resource "azurerm_linux_web_app" "n8n_app" {
     # N8N_PROTOCOL      = "https"
     # N8N_SECURE_COOKIE = "true"
 
-    HOST_N8N     = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
-    PORT_N8N     = "5678"
-    PROTOCOL_N8N = "https"
-
-    # n8n URLs
-    WEBHOOK_URL = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    HOST_N8N                            = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    PORT_N8N                            = "5678"
+    PROTOCOL_N8N                        = "https"
+    WEBHOOK_URL                         = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
 
     # PostgreSQL Database Configuration
     DB_TYPE                = "postgresdb"
