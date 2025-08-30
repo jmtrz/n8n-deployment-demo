@@ -114,15 +114,22 @@ jobs:
         npm run build -- --configuration production
         echo "Build completed successfully"
 
+    - name: List build output (debug)
+      working-directory: ${{ env.ANGULAR_APP_PATH }}
+      run: |
+        echo "Build output contents:"
+        ls -la dist/
+        ls -la dist/n8n-deployment-monitoring/ || echo "dist/n8n-deployment-monitoring not found"
+        
     - name: Deploy to Azure Static Web Apps
       uses: Azure/static-web-apps-deploy@v1
       with:
         azure_static_web_apps_api_token: ${{ needs.terraform-plan-and-apply.outputs.deployment-token || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         action: 'upload'
-        app_location: '${{ env.ANGULAR_APP_PATH }}'
+        app_location: 'src/n8n-deployment-monitoring/dist/n8n-deployment-monitoring'
         api_location: ''
-        output_location: 'dist/n8n-deployment-monitoring'
+        output_location: ''
         skip_app_build: true
 
   close-pull-request:
