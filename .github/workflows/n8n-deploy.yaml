@@ -10,6 +10,7 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
   TF_VAR_n8n_admin_password: ${{ secrets.TF_VAR_n8n_admin_password }}
+  TF_VAR_postgres_admin_password: ${{ secrets.TF_VAR_postgres_admin_password }}
   # Backend configuration
   TF_BACKEND_RESOURCE_GROUP_NAME: ${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}
   TF_BACKEND_STORAGE_ACCOUNT_NAME: ${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}
@@ -37,6 +38,7 @@ jobs:
           echo "ARM_SUBSCRIPTION_ID is set: $([[ -n "$ARM_SUBSCRIPTION_ID" ]] && echo "✓" || echo "✗")"
           echo "ARM_TENANT_ID is set: $([[ -n "$ARM_TENANT_ID" ]] && echo "✓" || echo "✗")"
           echo "TF_VAR_n8n_admin_password is set: $([[ -n "$TF_VAR_n8n_admin_password" ]] && echo "✓" || echo "✗")"
+          echo "TF_VAR_postgres_admin_password is set: $([[ -n "$TF_VAR_postgres_admin_password" ]] && echo "✓" || echo "✗")"
 
       - name: Terraform Init
         working-directory: ./terraform

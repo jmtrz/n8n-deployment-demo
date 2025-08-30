@@ -3,7 +3,9 @@
     "allow": [
       "Bash(rm:*)",
       "Bash(terraform -chdir=terraform fmt -check)",
-      "Bash(terraform:*)"
+      "Bash(terraform:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm start)"
     ],
     "deny": []
   }
