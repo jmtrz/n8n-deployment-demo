@@ -5,8 +5,8 @@ resource "random_integer" "suffix" {
 }
 
 resource "azurerm_resource_group" "n8n_rg" {
-  name     = "n8n-resource-group"
-  location = "West US 2"
+  name     = "n8n-resource-group-${random_integer.suffix.result}"
+  location = "southeastasia"
   tags = {
     environment = "demo"
   }
