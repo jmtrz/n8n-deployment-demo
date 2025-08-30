@@ -45,28 +45,26 @@ resource "azurerm_linux_web_app" "n8n_app" {
   }
 
   app_settings = {
-    # App Service specific
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
-
     # n8n authentication
-    N8N_BASIC_AUTH_ACTIVE   = "true"
-    N8N_BASIC_AUTH_USER     = "admin"
-    N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
+    # N8N_BASIC_AUTH_ACTIVE   = "true"
+    # N8N_BASIC_AUTH_USER     = "admin"
+    # N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
 
     # n8n network configuration (standard variable names)
     # N8N_HOST     = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
-    HOST_N8N     = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
-    PORT_N8N     = "5678"
-    PROTOCOL_N8N = "https"
     # N8N_PORT     = "5678"
     # N8N_PROTOCOL = "https"
 
     # n8n security and URLs
     # N8N_ENCRYPTION_KEY = ""
-    WEBHOOK_URL = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
+    WEBHOOK_URL = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    HOST_N8N    = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    PORT_N8N    = "5678"
+    PROTOCOL_N8N = "https"
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
 
     # Additional n8n configuration
-    N8N_SECURE_COOKIE = "true"
+    # N8N_SECURE_COOKIE = "true"
   }
 
   logs {
