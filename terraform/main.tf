@@ -54,13 +54,17 @@ resource "azurerm_linux_web_app" "n8n_app" {
     N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
 
     # n8n network configuration
-    N8N_HOST          = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    N8N_HOST          = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
     N8N_PORT          = "5678"
     N8N_PROTOCOL      = "https"
     N8N_SECURE_COOKIE = "true"
 
+    # HOST_N8N = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    # PORT_N8N = "5678"
+    # PROTOCOL_N8N = "https"
+
     # n8n URLs
-    WEBHOOK_URL = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
+    WEBHOOK_URL = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
 
     # PostgreSQL Database Configuration
     DB_TYPE                = "postgresdb"
