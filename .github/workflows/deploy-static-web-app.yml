@@ -20,6 +20,17 @@ env:
   NODE_VERSION: '18.x'
   ANGULAR_APP_PATH: './src/n8n-deployment-monitoring'
   TERRAFORM_PATH: './terraform/static-web-app'
+  TERRAFORM_VERSION: '1.5.0'
+  # Reuse existing service principal variables
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  # Backend configuration
+  TF_BACKEND_RESOURCE_GROUP_NAME: ${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}
+  TF_BACKEND_STORAGE_ACCOUNT_NAME: ${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}
+  TF_BACKEND_CONTAINER_NAME: ${{ secrets.TF_BACKEND_CONTAINER_NAME }}
+  TF_BACKEND_ACCESS_KEY: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
 
 jobs:
   terraform-plan-and-apply:
@@ -37,17 +48,25 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: 1.5.0
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
         terraform_wrapper: false
 
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Debug Environment Variables
+      run: |
+        echo "ARM_CLIENT_ID is set: $([[ -n "$ARM_CLIENT_ID" ]] && echo "✓" || echo "✗")"
+        echo "ARM_CLIENT_SECRET is set: $([[ -n "$ARM_CLIENT_SECRET" ]] && echo "✓" || echo "✗")" 
+        echo "ARM_SUBSCRIPTION_ID is set: $([[ -n "$ARM_SUBSCRIPTION_ID" ]] && echo "✓" || echo "✗")"
+        echo "ARM_TENANT_ID is set: $([[ -n "$ARM_TENANT_ID" ]] && echo "✓" || echo "✗")"
 
     - name: Terraform Init
       working-directory: ${{ env.TERRAFORM_PATH }}
-      run: terraform init
+      run: |
+        terraform init \
+          -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
+          -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
+          -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
+          -backend-config="key=static-web-app/terraform.tfstate" \
+          -backend-config="access_key=$TF_BACKEND_ACCESS_KEY"
 
     - name: Terraform Plan
       working-directory: ${{ env.TERRAFORM_PATH }}
@@ -131,16 +150,17 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: 1.5.0
-
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
 
     - name: Terraform Init
       working-directory: ${{ env.TERRAFORM_PATH }}
-      run: terraform init
+      run: |
+        terraform init \
+          -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
+          -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
+          -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
+          -backend-config="key=static-web-app/terraform.tfstate" \
+          -backend-config="access_key=$TF_BACKEND_ACCESS_KEY"
 
     - name: Terraform Destroy
       working-directory: ${{ env.TERRAFORM_PATH }}

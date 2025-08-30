@@ -12,10 +12,7 @@ terraform {
   }
   
   backend "azurerm" {
-    resource_group_name  = "rg-terraform-state"
-    storage_account_name = "stterraformstateuniqu1"
-    container_name       = "tfstate"
-    key                  = "static-web-app.terraform.tfstate"
+    # Configuration provided via CLI arguments in GitHub Actions
   }
 }
 
