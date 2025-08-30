@@ -37,7 +37,7 @@ resource "azurerm_linux_web_app" "n8n_app" {
   site_config {
     application_stack {
       docker_image     = "n8nio/n8n"
-      docker_image_tag = "nightly"
+      docker_image_tag = "latest"
     }
     always_on           = true
     minimum_tls_version = "1.2"
@@ -49,13 +49,13 @@ resource "azurerm_linux_web_app" "n8n_app" {
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
 
     # n8n authentication
-    # N8N_BASIC_AUTH_ACTIVE   = "true"
-    # N8N_BASIC_AUTH_USER     = "admin"
-    # N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
+    N8N_BASIC_AUTH_ACTIVE   = "true"
+    N8N_BASIC_AUTH_USER     = "admin"
+    N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
 
     # n8n network configuration (standard variable names)
     # N8N_HOST     = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
-    HOST_N8N     = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
+    HOST_N8N     = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
     PORT_N8N     = "5678"
     PROTOCOL_N8N = "https"
     # N8N_PORT     = "5678"
@@ -63,10 +63,10 @@ resource "azurerm_linux_web_app" "n8n_app" {
 
     # n8n security and URLs
     # N8N_ENCRYPTION_KEY = ""
-    WEBHOOK_URL = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
+    WEBHOOK_URL = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
 
     # Additional n8n configuration
-    # N8N_SECURE_COOKIE = "true"
+    N8N_SECURE_COOKIE = "true"
   }
 
   logs {
