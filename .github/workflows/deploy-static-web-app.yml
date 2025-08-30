@@ -68,6 +68,12 @@ jobs:
           -backend-config="key=static-web-app/terraform.tfstate" \
           -backend-config="access_key=$TF_BACKEND_ACCESS_KEY"
 
+    - name: Terraform Refresh (sync state with Azure)
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: |
+        echo "Refreshing Terraform state to match actual Azure resources..."
+        terraform refresh -var="environment=demo"
+      
     - name: Terraform Plan
       working-directory: ${{ env.TERRAFORM_PATH }}
       run: terraform plan -var="environment=demo" -out=tfplan
