@@ -45,26 +45,31 @@ resource "azurerm_linux_web_app" "n8n_app" {
   }
 
   app_settings = {
-    # n8n authentication
-    # N8N_BASIC_AUTH_ACTIVE   = "true"
-    # N8N_BASIC_AUTH_USER     = "admin"
-    # N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
-
-    # n8n network configuration (standard variable names)
-    # N8N_HOST     = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
-    # N8N_PORT     = "5678"
-    # N8N_PROTOCOL = "https"
-
-    # n8n security and URLs
-    # N8N_ENCRYPTION_KEY = ""
-    WEBHOOK_URL                         = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
-    HOST_N8N                            = "n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
-    PORT_N8N                            = "5678"
-    PROTOCOL_N8N                        = "https"
+    # App Service specific
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
 
-    # Additional n8n configuration
-    # N8N_SECURE_COOKIE = "true"
+    # n8n authentication
+    N8N_BASIC_AUTH_ACTIVE   = "true"
+    N8N_BASIC_AUTH_USER     = "admin"
+    N8N_BASIC_AUTH_PASSWORD = var.n8n_admin_password
+
+    # n8n network configuration
+    N8N_HOST          = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net"
+    N8N_PORT          = "5678"
+    N8N_PROTOCOL      = "https"
+    N8N_SECURE_COOKIE = "true"
+
+    # n8n URLs
+    WEBHOOK_URL = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
+
+    # PostgreSQL Database Configuration
+    DB_TYPE                = "postgresdb"
+    DB_POSTGRESDB_HOST     = azurerm_postgresql_flexible_server.n8n_postgres.fqdn
+    DB_POSTGRESDB_PORT     = "5432"
+    DB_POSTGRESDB_DATABASE = azurerm_postgresql_flexible_server_database.n8n_database.name
+    DB_POSTGRESDB_USER     = var.postgres_admin_username
+    DB_POSTGRESDB_PASSWORD = var.postgres_admin_password
+    DB_POSTGRESDB_SCHEMA   = "public"
   }
 
   logs {
@@ -79,4 +84,41 @@ resource "azurerm_linux_web_app" "n8n_app" {
       }
     }
   }
+}
+
+# PostgreSQL Flexible Server
+resource "azurerm_postgresql_flexible_server" "n8n_postgres" {
+  name                = "n8n-postgres-${random_integer.suffix.result}"
+  resource_group_name = azurerm_resource_group.n8n_rg.name
+  location            = azurerm_resource_group.n8n_rg.location
+
+  administrator_login    = var.postgres_admin_username
+  administrator_password = var.postgres_admin_password
+
+  sku_name   = "B_Standard_B1ms" # Burstable B1ms tier
+  storage_mb = 32768             # 32GB storage (minimum for Flexible Server)
+  version    = "13"              # PostgreSQL version
+
+  backup_retention_days        = 7
+  geo_redundant_backup_enabled = false
+
+  tags = {
+    environment = "demo"
+  }
+}
+
+# PostgreSQL Database
+resource "azurerm_postgresql_flexible_server_database" "n8n_database" {
+  name      = "n8n"
+  server_id = azurerm_postgresql_flexible_server.n8n_postgres.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+
+# PostgreSQL Firewall Rule - Allow Azure Services
+resource "azurerm_postgresql_flexible_server_firewall_rule" "n8n_postgres_firewall_azure" {
+  name             = "allow-azure-services"
+  server_id        = azurerm_postgresql_flexible_server.n8n_postgres.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
 }

@@ -1,0 +1,147 @@
+name: Deploy Angular App to Azure Static Web Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'terraform/static-web-app/**'
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'terraform/static-web-app/**'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18.x'
+  ANGULAR_APP_PATH: './src/n8n-deployment-monitoring'
+  TERRAFORM_PATH: './terraform/static-web-app'
+
+jobs:
+  terraform-plan-and-apply:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    name: 'Terraform Infrastructure'
+    outputs:
+      static-web-app-name: ${{ steps.terraform-output.outputs.static_web_app_name }}
+      deployment-token: ${{ steps.terraform-output.outputs.deployment_token }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+        terraform_wrapper: false
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Terraform Init
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: terraform init
+
+    - name: Terraform Plan
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: terraform plan -var="environment=prod" -var="location=East US" -out=tfplan
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: terraform apply -auto-approve tfplan
+
+    - name: Get Terraform Outputs
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      id: terraform-output
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: |
+        echo "static_web_app_name=$(terraform output -raw static_web_app_name)" >> $GITHUB_OUTPUT
+        echo "deployment_token=$(terraform output -raw deployment_token)" >> $GITHUB_OUTPUT
+
+  build-and-deploy:
+    needs: terraform-plan-and-apply
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    name: 'Build and Deploy Angular App'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: '${{ env.ANGULAR_APP_PATH }}/package-lock.json'
+
+    - name: Install dependencies
+      working-directory: ${{ env.ANGULAR_APP_PATH }}
+      run: npm ci
+
+    - name: Build Angular application
+      working-directory: ${{ env.ANGULAR_APP_PATH }}
+      run: |
+        npm run build -- --configuration production
+        echo "Build completed successfully"
+
+    - name: Deploy to Azure Static Web Apps
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ needs.terraform-plan-and-apply.outputs.deployment-token || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: 'upload'
+        app_location: '${{ env.ANGULAR_APP_PATH }}'
+        api_location: ''
+        output_location: 'dist/n8n-deployment-monitoring'
+        skip_app_build: true
+
+  close-pull-request:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: 'Close Pull Request'
+    
+    steps:
+    - name: Close Pull Request
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        action: 'close'
+
+  # Optional: Terraform cleanup for development branches
+  terraform-destroy:
+    if: github.event.action == 'closed' && github.event.pull_request.merged == false
+    runs-on: ubuntu-latest
+    name: 'Cleanup Infrastructure'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Terraform Init
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: terraform init
+
+    - name: Terraform Destroy
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: terraform destroy -auto-approve -var="environment=dev" -var="location=East US"
