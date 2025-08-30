@@ -49,11 +49,11 @@ resource "azurerm_linux_web_app" "n8n_app" {
     N8N_BASIC_AUTH_USER                 = "admin"
     N8N_BASIC_AUTH_PASSWORD             = var.n8n_admin_password
     N8N_HOST                            = "0.0.0.0"
-    N8N_PORT                            = "5678"
+    N8N_PORT                            = "80"
     N8N_ENCRYPTION_KEY                  = ""
-    PROTOCOL_N8N                        = "https"
-    WEBHOOK_URL                         = ""
-    HOST_N8N                            = ""
+    N8N_PROTOCOL                        = "http"
+    N8N_SECURE_COOKIE                   = "false"
+    WEBHOOK_TUNNEL_URL                  = "https://n8n-appservice-${random_integer.suffix.result}.azurewebsites.net/"
   }
 
   logs {
