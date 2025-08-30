@@ -7,7 +7,8 @@
       "Bash(mkdir:*)",
       "Bash(npm start)",
       "Bash(curl:*)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
