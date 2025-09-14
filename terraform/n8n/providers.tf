@@ -19,7 +19,7 @@ terraform {
     # - storage_account_name = from TF_BACKEND_STORAGE_ACCOUNT_NAME  
     # - container_name       = from TF_BACKEND_CONTAINER_NAME
     # - access_key          = from TF_BACKEND_ACCESS_KEY
-    key = "main/terraform.tfstate"
+    key = "n8n/terraform.tfstate"
   }
 }
 
