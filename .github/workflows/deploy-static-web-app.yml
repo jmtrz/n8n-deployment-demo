@@ -1,4 +1,4 @@
-name: Deploy Angular App to Azure Static Web Apps
+name: 🗒️ deploy angular app
 
 on:
   push:
@@ -33,7 +33,38 @@ env:
   TF_BACKEND_ACCESS_KEY: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
 
 jobs:
+  setup-backend:
+    runs-on: ubuntu-latest
+    name: 'Setup Backend if Needed'
+    outputs:
+      backend-ready: ${{ steps.check-backend.outputs.ready }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check if backend secrets are configured
+      id: check-backend
+      run: |
+        if [ -n "${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}" ] && \
+           [ -n "${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}" ] && \
+           [ -n "${{ secrets.TF_BACKEND_CONTAINER_NAME }}" ] && \
+           [ -n "${{ secrets.TF_BACKEND_ACCESS_KEY }}" ]; then
+          echo "✅ All backend secrets are configured"
+          echo "ready=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Backend secrets are not configured"
+          echo "Missing secrets. Please run the 'Setup Terraform Backend' workflow first."
+          echo "Required secrets:"
+          echo "- TF_BACKEND_RESOURCE_GROUP_NAME: $([[ -n "${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}" ]] && echo "✓" || echo "✗")"
+          echo "- TF_BACKEND_STORAGE_ACCOUNT_NAME: $([[ -n "${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}" ]] && echo "✓" || echo "✗")"
+          echo "- TF_BACKEND_CONTAINER_NAME: $([[ -n "${{ secrets.TF_BACKEND_CONTAINER_NAME }}" ]] && echo "✓" || echo "✗")"
+          echo "- TF_BACKEND_ACCESS_KEY: $([[ -n "${{ secrets.TF_BACKEND_ACCESS_KEY }}" ]] && echo "✓" || echo "✗")"
+          exit 1
+        fi
+
   terraform-plan-and-apply:
+    needs: setup-backend
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     name: 'Terraform Infrastructure'
@@ -98,7 +129,7 @@ jobs:
         echo "Outputs written to GITHUB_OUTPUT"
 
   build-and-deploy:
-    needs: terraform-plan-and-apply
+    needs: [setup-backend, terraform-plan-and-apply]
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     name: 'Build and Deploy Angular App'

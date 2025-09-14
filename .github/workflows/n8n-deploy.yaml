@@ -1,4 +1,4 @@
-name: '🗒️n8n terraform plan/apply'
+name: '🗒️ n8n terraform plan/apply'
 
 on:
   workflow_dispatch:
@@ -18,12 +18,39 @@ env:
   TF_BACKEND_ACCESS_KEY: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
 
 jobs:
+  setup-backend:
+    name: 'Setup Terraform Backend'
+    uses: ./.github/workflows/setup-terraform-backend.yml
+    with:
+      force_recreate: false
+    secrets:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      TF_BACKEND_RESOURCE_GROUP_NAME: ${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}
+      TF_BACKEND_STORAGE_ACCOUNT_NAME: ${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}
+      TF_BACKEND_CONTAINER_NAME: ${{ secrets.TF_BACKEND_CONTAINER_NAME }}
+      TF_BACKEND_ACCESS_KEY: ${{ secrets.TF_BACKEND_ACCESS_KEY }}
+
   terraform-plan:
+    needs: [setup-backend]
     name: 'Terraform Plan'
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate Backend Setup
+        run: |
+          if [ "${{ needs.setup-backend.outputs.backend-ready }}" != "true" ]; then
+            echo "❌ Backend is not ready. Please check the backend setup job."
+            exit 1
+          fi
+          echo "✅ Backend is ready for use"
+          echo "Resource Group: ${{ needs.setup-backend.outputs.resource-group-name }}"
+          echo "Storage Account: ${{ needs.setup-backend.outputs.storage-account-name }}"
+          echo "Container: ${{ needs.setup-backend.outputs.container-name }}"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -44,10 +71,10 @@ jobs:
         working-directory: ./terraform
         run: |
           terraform init \
-            -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
-            -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
-            -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
-            -backend-config="key=n8n/terraform.tfstate" \
+            -backend-config="resource_group_name=${{ needs.setup-backend.outputs.resource-group-name }}" \
+            -backend-config="storage_account_name=${{ needs.setup-backend.outputs.storage-account-name }}" \
+            -backend-config="container_name=${{ needs.setup-backend.outputs.container-name }}" \
+            -backend-config="key=main/terraform.tfstate" \
             -backend-config="access_key=$TF_BACKEND_ACCESS_KEY"
       
       - name: Terraform Format
@@ -110,7 +137,7 @@ jobs:
   terraform-apply:
     name: 'Terraform Apply'
     runs-on: ubuntu-latest
-    needs: [terraform-plan]
+    needs: [setup-backend, terraform-plan]
 
     steps:
 
@@ -127,10 +154,10 @@ jobs:
       working-directory: ./terraform
       run: |
         terraform init \
-          -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
-          -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
-          -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
-          -backend-config="key=n8n/terraform.tfstate" \
+          -backend-config="resource_group_name=${{ needs.setup-backend.outputs.resource-group-name }}" \
+          -backend-config="storage_account_name=${{ needs.setup-backend.outputs.storage-account-name }}" \
+          -backend-config="container_name=${{ needs.setup-backend.outputs.container-name }}" \
+          -backend-config="key=main/terraform.tfstate" \
           -backend-config="access_key=$TF_BACKEND_ACCESS_KEY"
 
     - name: Download Terraform Plan

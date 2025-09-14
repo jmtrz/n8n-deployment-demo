@@ -1,0 +1,220 @@
+name: Setup Terraform Backend
+
+on:
+  workflow_call:
+    inputs:
+      force_recreate:
+        description: 'Force recreate backend resources (use with caution)'
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      backend-ready:
+        description: "Whether backend is ready for use"
+        value: ${{ jobs.check-backend-exists.outputs.backend-exists == 'true' || jobs.create-backend.result == 'success' }}
+      resource-group-name:
+        description: "Backend resource group name"
+        value: ${{ jobs.create-backend.outputs.resource-group-name || jobs.check-backend-exists.outputs.existing-resource-group }}
+      storage-account-name:
+        description: "Backend storage account name"
+        value: ${{ jobs.create-backend.outputs.storage-account-name || jobs.check-backend-exists.outputs.existing-storage-account }}
+      container-name:
+        description: "Backend container name"
+        value: ${{ jobs.create-backend.outputs.container-name || jobs.check-backend-exists.outputs.existing-container }}
+    secrets:
+      ARM_CLIENT_ID:
+        required: true
+      ARM_CLIENT_SECRET:
+        required: true
+      ARM_SUBSCRIPTION_ID:
+        required: true
+      ARM_TENANT_ID:
+        required: true
+      TF_BACKEND_RESOURCE_GROUP_NAME:
+        required: false
+      TF_BACKEND_STORAGE_ACCOUNT_NAME:
+        required: false
+      TF_BACKEND_CONTAINER_NAME:
+        required: false
+      TF_BACKEND_ACCESS_KEY:
+        required: false
+  workflow_dispatch:
+    inputs:
+      force_recreate:
+        description: 'Force recreate backend resources (use with caution)'
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/backend/**'
+
+env:
+  TERRAFORM_VERSION: '1.5.0'
+  TERRAFORM_PATH: './terraform/backend'
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+jobs:
+  check-backend-exists:
+    runs-on: ubuntu-latest
+    name: 'Check if Backend Resources Exist'
+    outputs:
+      backend-exists: ${{ steps.check-resources.outputs.exists }}
+      should-create: ${{ steps.decide.outputs.should_create }}
+      existing-resource-group: ${{ steps.check-resources.outputs.existing_rg }}
+      existing-storage-account: ${{ steps.check-resources.outputs.existing_sa }}
+      existing-container: ${{ steps.check-resources.outputs.existing_container }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Azure CLI Login
+      uses: azure/login@v1
+      with:
+        creds: |
+          {
+            "clientId": "${{ secrets.ARM_CLIENT_ID }}",
+            "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+            "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
+            "tenantId": "${{ secrets.ARM_TENANT_ID }}"
+          }
+
+    - name: Check if backend resources exist
+      id: check-resources
+      run: |
+        echo "Checking if backend resources already exist..."
+
+        # Try to get existing backend configuration from secrets
+        if [ -n "${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}" ] && [ -n "${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}" ]; then
+          echo "Found backend configuration in secrets. Checking if resources exist..."
+
+          # Check if resource group exists
+          if az group show --name "${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}" &>/dev/null; then
+            echo "Resource group exists"
+
+            # Check if storage account exists
+            if az storage account show --name "${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}" --resource-group "${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}" &>/dev/null; then
+              echo "Storage account exists"
+              echo "exists=true" >> $GITHUB_OUTPUT
+              echo "existing_rg=${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}" >> $GITHUB_OUTPUT
+              echo "existing_sa=${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}" >> $GITHUB_OUTPUT
+              echo "existing_container=${{ secrets.TF_BACKEND_CONTAINER_NAME }}" >> $GITHUB_OUTPUT
+            else
+              echo "Storage account does not exist"
+              echo "exists=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Resource group does not exist"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "No backend configuration found in secrets"
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Decide whether to create backend
+      id: decide
+      run: |
+        if [ "${{ steps.check-resources.outputs.exists }}" = "true" ] && [ "${{ github.event.inputs.force_recreate }}" != "true" ]; then
+          echo "Backend resources exist and force_recreate is not enabled. Skipping creation."
+          echo "should_create=false" >> $GITHUB_OUTPUT
+        else
+          echo "Backend resources do not exist or force_recreate is enabled. Will create resources."
+          echo "should_create=true" >> $GITHUB_OUTPUT
+        fi
+
+  create-backend:
+    needs: check-backend-exists
+    if: needs.check-backend-exists.outputs.should-create == 'true'
+    runs-on: ubuntu-latest
+    name: 'Create Terraform Backend'
+    outputs:
+      resource-group-name: ${{ steps.terraform-output.outputs.resource_group_name }}
+      storage-account-name: ${{ steps.terraform-output.outputs.storage_account_name }}
+      container-name: ${{ steps.terraform-output.outputs.container_name }}
+      access-key: ${{ steps.terraform-output.outputs.access_key }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+        terraform_wrapper: false
+
+    - name: Debug Environment Variables
+      run: |
+        echo "ARM_CLIENT_ID is set: $([[ -n "$ARM_CLIENT_ID" ]] && echo "✓" || echo "✗")"
+        echo "ARM_CLIENT_SECRET is set: $([[ -n "$ARM_CLIENT_SECRET" ]] && echo "✓" || echo "✗")" 
+        echo "ARM_SUBSCRIPTION_ID is set: $([[ -n "$ARM_SUBSCRIPTION_ID" ]] && echo "✓" || echo "✗")"
+        echo "ARM_TENANT_ID is set: $([[ -n "$ARM_TENANT_ID" ]] && echo "✓" || echo "✗")"
+
+    - name: Terraform Init (local state for backend creation)
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: terraform init
+
+    - name: Terraform Plan
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: terraform plan -var="environment=demo" -out=tfplan
+
+    - name: Terraform Apply
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: terraform apply -auto-approve tfplan
+
+    - name: Get Terraform Outputs
+      id: terraform-output
+      working-directory: ${{ env.TERRAFORM_PATH }}
+      run: |
+        echo "=== Terraform Outputs Debug ==="
+        terraform output
+        echo "================================"
+        
+        echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+        echo "storage_account_name=$(terraform output -raw storage_account_name)" >> $GITHUB_OUTPUT
+        echo "container_name=$(terraform output -raw container_name)" >> $GITHUB_OUTPUT
+        echo "access_key=$(terraform output -raw storage_account_primary_key)" >> $GITHUB_OUTPUT
+
+    - name: Display Backend Configuration
+      run: |
+        echo ""
+        echo "✅ Backend resources created successfully!"
+        echo ""
+        echo "📋 Backend Configuration:"
+        echo "========================"
+        echo "Resource Group: ${{ steps.terraform-output.outputs.resource_group_name }}"
+        echo "Storage Account: ${{ steps.terraform-output.outputs.storage_account_name }}"
+        echo "Container: ${{ steps.terraform-output.outputs.container_name }}"
+        echo ""
+        echo "🔧 Add these to your GitHub Repository Secrets:"
+        echo "TF_BACKEND_RESOURCE_GROUP_NAME=${{ steps.terraform-output.outputs.resource_group_name }}"
+        echo "TF_BACKEND_STORAGE_ACCOUNT_NAME=${{ steps.terraform-output.outputs.storage_account_name }}"
+        echo "TF_BACKEND_CONTAINER_NAME=${{ steps.terraform-output.outputs.container_name }}"
+        echo "TF_BACKEND_ACCESS_KEY=<redacted>"
+        echo ""
+        echo "⚠️  IMPORTANT: You must manually add the TF_BACKEND_ACCESS_KEY secret to your repository."
+        echo "   The access key cannot be automatically added for security reasons."
+
+  skip-backend-creation:
+    needs: check-backend-exists
+    if: needs.check-backend-exists.outputs.should-create == 'false'
+    runs-on: ubuntu-latest
+    name: 'Backend Already Exists'
+    
+    steps:
+    - name: Backend exists message
+      run: |
+        echo "✅ Backend resources already exist and are configured."
+        echo "🔍 Current backend configuration (from secrets):"
+        echo "Resource Group: ${{ secrets.TF_BACKEND_RESOURCE_GROUP_NAME }}"
+        echo "Storage Account: ${{ secrets.TF_BACKEND_STORAGE_ACCOUNT_NAME }}"
+        echo "Container: ${{ secrets.TF_BACKEND_CONTAINER_NAME }}"
+        echo ""
+        echo "💡 To force recreate the backend, run this workflow manually with 'force_recreate' enabled."
