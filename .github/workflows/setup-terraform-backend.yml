@@ -1,4 +1,4 @@
-name: Setup Terraform Backend
+name: '🔗 Setup Terraform Backend'
 
 on:
   workflow_call:

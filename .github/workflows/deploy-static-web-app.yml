@@ -1,4 +1,4 @@
-name: 🗒️ deploy angular app
+name: 🔗 deploy angular app
 
 on:
   push:
