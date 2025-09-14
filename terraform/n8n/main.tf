@@ -36,7 +36,7 @@ resource "azurerm_linux_web_app" "n8n_app" {
 
   site_config {
     application_stack {
-      docker_image_name     = "n8nio/n8n:nightly"
+      docker_image_name = "n8nio/n8n:nightly"
     }
     always_on           = true
     minimum_tls_version = "1.2"
