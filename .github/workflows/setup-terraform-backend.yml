@@ -1,43 +1,6 @@
 name: '🔗 Setup Terraform Backend'
 
 on:
-  workflow_call:
-    inputs:
-      force_recreate:
-        description: 'Force recreate backend resources (use with caution)'
-        required: false
-        default: false
-        type: boolean
-    outputs:
-      backend-ready:
-        description: "Whether backend is ready for use"
-        value: ${{ jobs.check-backend-exists.outputs.backend-exists == 'true' || jobs.create-backend.result == 'success' }}
-      resource-group-name:
-        description: "Backend resource group name"
-        value: ${{ jobs.create-backend.outputs.resource-group-name || jobs.check-backend-exists.outputs.existing-resource-group }}
-      storage-account-name:
-        description: "Backend storage account name"
-        value: ${{ jobs.create-backend.outputs.storage-account-name || jobs.check-backend-exists.outputs.existing-storage-account }}
-      container-name:
-        description: "Backend container name"
-        value: ${{ jobs.create-backend.outputs.container-name || jobs.check-backend-exists.outputs.existing-container }}
-    secrets:
-      ARM_CLIENT_ID:
-        required: true
-      ARM_CLIENT_SECRET:
-        required: true
-      ARM_SUBSCRIPTION_ID:
-        required: true
-      ARM_TENANT_ID:
-        required: true
-      TF_BACKEND_RESOURCE_GROUP_NAME:
-        required: false
-      TF_BACKEND_STORAGE_ACCOUNT_NAME:
-        required: false
-      TF_BACKEND_CONTAINER_NAME:
-        required: false
-      TF_BACKEND_ACCESS_KEY:
-        required: false
   workflow_dispatch:
     inputs:
       force_recreate:
